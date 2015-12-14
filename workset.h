@@ -1,13 +1,23 @@
 #ifndef WORKSET_H
 #define WORKSET_H
 
+#include <string>
+
+#include "crawler.h"
+
 class Workset{
-    // TODO
+	// TODO
+	Crawler crawler;
+	std::string domain;
+
 public:
-    bool operator()()
-    {
-    	return true;
-    }
+	Workset(std::string domain);
+	
+	bool operator()()
+	{
+		crawler.crawl(domain);
+		return true;
+	}
 };
 
 
