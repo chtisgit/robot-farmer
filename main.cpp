@@ -1,4 +1,5 @@
 #include <iostream>
+#include <csignal>
 
 #include "log.h"
 #include "crawler.h"
@@ -6,7 +7,7 @@
 #include "workset.h"
 
 ThreadPool<Workset> *global_pool = nullptr;
-void signal_handler_exit()
+void signal_handler_exit(int sig)
 {
     if(global_pool != nullptr)
             global_pool->stopall();
