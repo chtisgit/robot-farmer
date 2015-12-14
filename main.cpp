@@ -2,6 +2,16 @@
 
 #include "log.h"
 #include "crawler.h"
+#include "threadpool.h"
+#include "workset.h"
+
+ThreadPool<Workset> *global_pool = nullptr;
+void signal_handler_exit()
+{
+    if(global_pool != nullptr)
+            global_pool->stopall();
+}
+
 
 #include "util.h"
 
@@ -18,7 +28,11 @@ int main(int argc, char **argv) {
         usage();
     
     Crawler c;
+    ThreadPool<Workset> pool(100);
+    global_pool = &pool;
+
     c.crawl(argv[1]);
 
     return 0;
 }
+
