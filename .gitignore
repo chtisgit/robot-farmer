@@ -19,4 +19,4 @@ Session.vim
 *~
 
 
-build/robot_farmer
+build/*
