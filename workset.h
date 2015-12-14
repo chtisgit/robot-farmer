@@ -6,7 +6,7 @@ class Workset{
 public:
     bool operator()()
     {
-
+    	return true;
     }
 };
 
