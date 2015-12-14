@@ -19,11 +19,14 @@ set(HEADERS
     crawler.h
     strexception.h
     log.h
+    color.h
+    util.h
+    tld.h
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
 set(CMAKE_LINK_FLAGS "-L.")
 
 add_executable(robot_farmer ${SOURCE} ${HEADERS})
-target_link_libraries(robot_farmer curl)
+target_link_libraries(robot_farmer curl pthread)
 target_compile_features(robot_farmer PRIVATE cxx_range_for)

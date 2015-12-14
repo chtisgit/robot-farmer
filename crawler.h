@@ -3,6 +3,7 @@
 
 #include <string>
 #include <list>
+#include <regex>
 #include <curl/curl.h>
 
 #define ROBOTS_TXT_URL "/robots.txt"
@@ -19,16 +20,30 @@
 
 class Crawler {
 public:
+    typedef std::function<void (std::string)> DomainFoundFunc;
+
     void crawl(std::string);
+    void setCallback(DomainFoundFunc);
 
 private:
     CURL* init_curl();
-    std::list<std::string> parse_domains();
+
+    void download_robots(std::string domain);
+    void parse_domains(std::string domain);
 
     void make_dir(std::string);
     void make_dir_struct(std::string, std::string, int);
 
+    void new_domain(std::string);
+    bool domain_is_new(std::string);
+    bool domain_is_valid(std::string);
+
     std::string get_dir_struct(std::string, std::string, int);
+
+    DomainFoundFunc df_callback;
+
+    static std::regex domain_regex;
+
 };
 
 #endif

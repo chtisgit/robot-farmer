@@ -12,11 +12,14 @@
 #include <thread>
 #include <iostream>
 
+// include here as every other file relies on it beeing avaliable if log is included
+#include "util.h"
+
 #ifndef LOG_H
 #define LOG_H
-class log {
+class Log {
 public:
-    typedef log* logptr;
+    typedef Log* logptr;
 
     static logptr get_instance();
     static void shutdown();
@@ -25,8 +28,8 @@ public:
     void msg(const char *message);
 
     static void create(std::ostream &out);
-    log(std::ostream& out);
-    virtual ~log();
+    Log(std::ostream& out);
+    virtual ~Log();
 
 private:
     void run();
@@ -45,10 +48,10 @@ private:
 /*
  * Logs when destructor is called.
  */
-class logger {
+class Logger {
 public:
     std::stringstream& stream();
-    ~logger();
+    ~Logger();
 
 private:
     std::stringstream log_stream;

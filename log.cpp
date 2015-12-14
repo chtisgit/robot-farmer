@@ -1,10 +1,9 @@
 #include <mutex>
 
 #include "log.h"
-#include "util.h"
 
 /** initialization */
-log::logptr log::log_instance = nullptr;
+Log::logptr Log::log_instance = nullptr;
 
 /**
  * Create a new instance of the log class.
@@ -12,16 +11,16 @@ log::logptr log::log_instance = nullptr;
  * Use instead the get_instance() function.
  * @param io
  */
-void log::create(std::ostream& out) {
-    log::log_instance = new log(out);
+void Log::create(std::ostream& out) {
+    Log::log_instance = new Log(out);
 }
 
 /**
  * Shutdown the main log worker. Do this before exiting program.
  */
-void log::shutdown() {
-    delete(log::log_instance);
-    log::log_instance = nullptr;
+void Log::shutdown() {
+    delete(Log::log_instance);
+    Log::log_instance = nullptr;
 }
 
 /**
@@ -29,12 +28,12 @@ void log::shutdown() {
  * Do not use. Use create instead.
  * @param out
  */
-log::log(std::ostream& out) : log_output(out) {
+Log::Log(std::ostream& out) : log_output(out) {
     log_running = true;
-    log_worker = new std::thread(std::bind(&log::run, this));
+    log_worker = new std::thread(std::bind(&Log::run, this));
 }
 
-log::~log() {
+Log::~Log() {
     log_running = false;
     signal.notify_all();
 
@@ -50,8 +49,8 @@ log::~log() {
  * Returns a null pointer when before create is called!
  * @return
  */
-log::logptr log::get_instance() {
-    return log::log_instance;
+Log::logptr Log::get_instance() {
+    return Log::log_instance;
 }
 
 /**
@@ -59,13 +58,13 @@ log::logptr log::get_instance() {
  * Threadsafe.
  * @param message
  */
-void log::msg(const std::string &message) {
+void Log::msg(const std::string &message) {
     std::lock_guard<std::mutex> lk(log_lock);
     message_queue.push(message);
     signal.notify_all();
 }
 
-void log::msg(const char *message) {
+void Log::msg(const char *message) {
     std::lock_guard<std::mutex> lk(log_lock);
     message_queue.push(std::string(message));
     signal.notify_all();
@@ -74,7 +73,7 @@ void log::msg(const char *message) {
 /**
  * Internal callback for the worker thread.
  */
-void log::run() {
+void Log::run() {
 
     while (log_running || (message_queue.size() > 0)) {
         std::unique_lock<std::mutex> guard(log_lock);
@@ -92,18 +91,18 @@ void log::run() {
     }
 }
 
-void log::output(std::string msg) {
+void Log::output(std::string msg) {
 
     log_output << msg;
 }
 
-std::stringstream& logger::stream() {
+std::stringstream& Logger::stream() {
 
     return log_stream;
 }
 
-logger::~logger() {
-    log::logptr p = log::get_instance();
+Logger::~Logger() {
+    Log::logptr p = Log::get_instance();
     if (p) {
         p->msg(log_stream.str());
     } else {
