@@ -11,12 +11,14 @@ set(SOURCE
     main.cpp
     crawler.cpp
     strexception.cpp
+    log.cpp
 )
 
 set(HEADERS
     ${HEADERS}
     crawler.h
     strexception.h
+    log.h
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14")
