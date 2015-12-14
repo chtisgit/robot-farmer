@@ -16,13 +16,16 @@ void signal_handler_exit()
 #include "util.h"
 
 void usage() {
-    std::cout << "Usage: robot_farmer seed_domain" << std::endl; 
+    std::cerr << "Usage: robot_farmer seed_domain" << std::endl; 
     exit(1);
 }
 
 int main(int argc, char **argv) {
     Log::create(std::cout);
     LOG << "Starting..." << std::endl;
+
+    signal(SIGINT, signal_handler_exit);
+    signal(SIGTERM, signal_handler_exit);
 
     if(argc < 2)
         usage();
