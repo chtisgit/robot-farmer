@@ -1,4 +1,5 @@
 #include <iostream>
+#include <csignal>
 
 #include "log.h"
 #include "crawler.h"
@@ -6,7 +7,7 @@
 #include "workset.h"
 
 ThreadPool<Workset> *global_pool = nullptr;
-void signal_handler_exit()
+void signal_handler_exit(int sig)
 {
     if(global_pool != nullptr)
             global_pool->stopall();
@@ -16,13 +17,16 @@ void signal_handler_exit()
 #include "util.h"
 
 void usage() {
-    std::cout << "Usage: robot_farmer seed_domain" << std::endl; 
+    std::cerr << "Usage: robot_farmer seed_domain" << std::endl; 
     exit(1);
 }
 
 int main(int argc, char **argv) {
     Log::create(std::cout);
     LOG << "Starting..." << std::endl;
+
+    signal(SIGINT, signal_handler_exit);
+    signal(SIGTERM, signal_handler_exit);
 
     if(argc < 2)
         usage();

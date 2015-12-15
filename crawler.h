@@ -22,11 +22,16 @@ class Crawler {
 public:
     typedef std::function<void (std::string)> DomainFoundFunc;
 
+    Crawler();
     void crawl(std::string);
     void setCallback(DomainFoundFunc);
 
+    inline operator bool()
+    {
+        return curl != NULL;
+    }
+
 private:
-    CURL* init_curl();
 
     void download_robots(std::string domain);
     void parse_domains(std::string domain);
@@ -37,6 +42,8 @@ private:
     void new_domain(std::string);
     bool domain_is_new(std::string);
     bool domain_is_valid(std::string);
+
+    CURL *curl;
 
     std::string get_dir_struct(std::string, std::string, int);
 

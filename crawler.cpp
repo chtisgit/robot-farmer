@@ -21,19 +21,15 @@ std::regex Crawler::domain_regex("(([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])
 inline bool ends_with(std::string const & value, std::string const & ending)
 {
     if (ending.size() > value.size()) return false;
-        return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
 void Crawler::setCallback(DomainFoundFunc cb) {
     df_callback = cb;
 }
 
-CURL* Crawler::init_curl() {
-    CURL *curl = curl_easy_init();
-    
-    if(!curl)
-        throw StringException("Could not initialize curl");
-
+Crawler::Crawler() {
+    curl = curl_easy_init();
 }
 
 void Crawler::make_dir(std::string name) {
@@ -152,8 +148,6 @@ void Crawler::parse_domains(std::string domain) {
     std::string url = domain;
     url.append(INDEX_URL);
 
-    CURL *curl = init_curl();
-
     std::string buffer;
 
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -205,8 +199,6 @@ void Crawler::download_robots(std::string domain) {
     }
 
 #endif
-
-    CURL *curl = init_curl();
 
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 1L);
