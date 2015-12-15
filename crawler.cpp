@@ -57,6 +57,7 @@ void Crawler::make_dir_struct(std::string path, std::string domain, int lvl) {
 
         switch(c[0]) {
             case '.':
+            case '\0':
                 continue;
                 break;
         }
@@ -77,6 +78,7 @@ std::string Crawler::get_dir_struct(std::string path, std::string domain, int lv
 
         switch(c[0]) {
             case '.':
+            case '\0':
                 continue;
                 break;
         }
@@ -197,8 +199,11 @@ void Crawler::download_robots(std::string domain) {
 
     FILE *fp = fopen(filename, "wb");
     
-    if(!fp)
-        throw StringException(std::string("Could not open output file ").append(filename));
+    if(!fp) {
+        LOG << "Could not open output file " << filename; 
+        return;
+    }
+
 #endif
 
     CURL *curl = init_curl();
