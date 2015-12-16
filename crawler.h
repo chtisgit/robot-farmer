@@ -20,9 +20,10 @@
 
 class Crawler {
 public:
-    typedef std::function<void (std::string)> DomainFoundFunc;
+    typedef std::function<void (const std::string&)> DomainFoundFunc;
 
     Crawler();
+    ~Crawler();
     void crawl(std::string);
     void setCallback(DomainFoundFunc);
 

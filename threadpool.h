@@ -12,8 +12,8 @@ class Worker{
 	std::thread thr;
 
 public:
-	Worker(int id, std::thread thr);
-	inline void join()
+	Worker(int id, std::thread&& thr);
+	inline auto join() -> void
 	{
 		thr.join();
 	}
@@ -33,24 +33,25 @@ class ThreadPool{
 	std::list<Workset> sets_waiting;
 
 
-	inline void list_merge(){
+	inline auto list_merge() -> void {
 		sets_queue.splice(sets_queue.end(), sets_waiting);
 	}
-	void distribute();
-	void add_worker();
+	auto distribute() -> void;
+	auto add_worker() -> void;
 public:
 
 	ThreadPool(const int max_thr);
 
-	void load(Workset set);
-	void run(std::chrono::milliseconds = 250);
-	void stopall();
+	auto load(Workset set) -> void;
+	auto run(std::chrono::milliseconds = 250) -> void;
+	auto stopall() -> void;
+	auto waitall() -> void;
 };
 
 
 template<class Workset>
 ThreadPool<Workset>::ThreadPool(const int max_thr)
- : max_threads(max_thr), running(false),thr_id_count(0)
+ : running(false),thr_id_count(0),max_threads(max_thr)
 {
 }
 
@@ -60,7 +61,9 @@ void ThreadPool<Workset>::distribute()
 	if(sets_waiting.size() == 0)
 		return;
 
-	if(sets_queue.size() < max_threads*2/3){
+	const auto size = sets_queue.size();
+
+	if(size < static_cast<decltype(size)>(max_threads)*2/3){
 		sets_mutex.lock();
 		list_merge();
 		sets_mutex.unlock();
@@ -70,7 +73,7 @@ void ThreadPool<Workset>::distribute()
 template<class Workset>
 void ThreadPool<Workset>::add_worker()
 {
-	workers.emplace_back(thr_id_count++, [this](){
+	workers.emplace_back(thr_id_count++, std::thread([this](){
 		
 		while(running){
 
@@ -82,13 +85,13 @@ void ThreadPool<Workset>::add_worker()
 
 				sets_mutex.unlock();
 
-				running = ws();
+				ws();
 			}else{
 				sets_mutex.unlock();
 			}
 		}
 		
-	});
+	}));
 
 }
 
@@ -113,13 +116,18 @@ void ThreadPool<Workset>::run(std::chrono::milliseconds sleepfor)
 	while(running){
 		std::this_thread::sleep_for(sleepfor);
 		distribute();
-    }
+	}
 }
 
 template<class Workset>
 void ThreadPool<Workset>::stopall()
 {
 	running = false;
+}
+
+template<class Workset>
+void ThreadPool<Workset>::waitall()
+{
 	for(auto& w : workers)
 		w.join();
 }

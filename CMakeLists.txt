@@ -13,6 +13,7 @@ set(SOURCE
     strexception.cpp
     log.cpp
     threadpool.cpp
+    workset.cpp
 )
 
 set(HEADERS
@@ -27,9 +28,9 @@ set(HEADERS
     workset.h
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -Wall -std=c++14")
 set(CMAKE_LINK_FLAGS "-L.")
 
 add_executable(robot_farmer ${SOURCE} ${HEADERS})
 target_link_libraries(robot_farmer curl pthread)
-target_compile_features(robot_farmer PRIVATE cxx_range_for)
+#target_compile_features(robot_farmer PRIVATE cxx_range_for)

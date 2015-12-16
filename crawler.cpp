@@ -18,6 +18,14 @@
 // thanks [http://myregexp.com/examples.html]
 std::regex Crawler::domain_regex("(([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6})");
 
+Crawler::Crawler() {
+    curl = curl_easy_init();
+}
+
+Crawler::~Crawler() {
+    curl_easy_cleanup(curl);
+}
+
 inline bool ends_with(std::string const & value, std::string const & ending)
 {
     if (ending.size() > value.size()) return false;
@@ -26,10 +34,6 @@ inline bool ends_with(std::string const & value, std::string const & ending)
 
 void Crawler::setCallback(DomainFoundFunc cb) {
     df_callback = cb;
-}
-
-Crawler::Crawler() {
-    curl = curl_easy_init();
 }
 
 void Crawler::make_dir(std::string name) {
@@ -156,7 +160,6 @@ void Crawler::parse_domains(std::string domain) {
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "robot-farmer V0.1");
 
     CURLcode res = curl_easy_perform(curl);
-    curl_easy_cleanup(curl);
     
     std::smatch domain_match;
 
@@ -210,7 +213,6 @@ void Crawler::download_robots(std::string domain) {
 #endif
    
     CURLcode res = curl_easy_perform(curl);
-    curl_easy_cleanup(curl);
 
 #if FILE_OUTPUT
     fclose(fp);

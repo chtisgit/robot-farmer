@@ -12,11 +12,16 @@ class Workset{
 
 public:
 	Workset(std::string domain);
-	
-	bool operator()()
+	Workset(const char *domain);
+
+	inline auto new_data(std::string new_domain) -> void
+	{
+		domain = new_domain;
+	}
+
+	auto operator()() -> void
 	{
 		crawler.crawl(domain);
-		return true;
 	}
 };
 
