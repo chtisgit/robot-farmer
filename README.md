@@ -1,15 +1,29 @@
 # robot-farmer
 ## Crawls robots.txt files from everywhere
-
-          ,     ,
-         (\____/)
-          (_oo_)
-            (O)
-          __||__    \)
-       []/______\[] /
-       / \______/ \/
-      /    /__\
-     (\   /____\
+```
++---------------------+
+|                     |
+|  XXXX         XXXX  |
+|  X  X         X  X  |
+|  XXXX         XXXX  |
+|                     |
++---------------------+
+          X X
+          X X
+   XXXXXXXXXXXXXXXXX
+ XXX               XXX
+ XXX XXXXX         XXX
+ XXX               XXX
+ XXX       XX  XX  XXX
+ XXX               XXX
+ XXXXXXXXXXXXXXXXXXXXX
+ XX  XX         XX  XX
+     XX         XX
+     XX         XX
+     XX         XX
+     XX         XX
+  XXXXX         XXXX
+```
 
 
 ## About
