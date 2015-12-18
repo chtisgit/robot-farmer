@@ -23,6 +23,8 @@ public:
     typedef std::function<void (std::string)> DomainFoundFunc;
 
     Crawler();
+    virtual ~Crawler();
+
     void crawl(std::string);
     void setCallback(DomainFoundFunc);
 
@@ -37,7 +39,7 @@ private:
     void parse_domains(std::string domain);
 
     void make_dir(std::string);
-    void make_dir_struct(std::string, std::string, int);
+    void make_dir_struct(std::string, std::string, unsigned int);
 
     void new_domain(std::string);
     bool domain_is_new(std::string);
@@ -45,11 +47,12 @@ private:
 
     CURL *curl;
 
-    std::string get_dir_struct(std::string, std::string, int);
+    std::string get_dir_struct(std::string, std::string, unsigned int);
 
     DomainFoundFunc df_callback;
 
     static std::regex domain_regex;
+    static std::regex safe_chars_regex;
 
 };
 

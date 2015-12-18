@@ -11,6 +11,8 @@ void signal_handler_exit(int sig)
 {
     if(global_pool != nullptr)
             global_pool->stopall();
+
+    exit(1);
 }
 
 
