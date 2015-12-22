@@ -3,38 +3,27 @@
 
 #include <atomic>
 #include <thread>
+//#include <vector>
 #include <list>
 #include <chrono>
 #include <mutex>
 
-class Worker{
-	int id;
-	std::thread thr;
-
-public:
-	Worker(int id, std::thread thr);
-	inline void join()
-	{
-		thr.join();
-	}
-};
-
 template<class Workset>
 class ThreadPool{
 	std::atomic<bool> running;
-	std::atomic<int> thr_id_count;
 	const int max_threads;
 
-	std::list<Worker> workers;
+	std::list<std::thread> workers;
 
-	std::mutex sets_mutex;
-	std::list<Workset> sets_queue;
+	std::mutex sets1_mutex;
+	std::list<Workset> sets1;
 
-	std::list<Workset> sets_waiting;
+	std::mutex sets2_mutex;
+	std::list<Workset> sets2;
 
 
 	inline void list_merge(){
-		sets_queue.splice(sets_queue.end(), sets_waiting);
+		sets1.splice(sets1.end(), sets2);
 	}
 	void distribute();
 	void add_worker();
@@ -44,47 +33,50 @@ public:
 
 	void load(Workset set);
 	void run(std::chrono::milliseconds = 250);
-	void stopall();
+	void send_stop();
+	void join();
 };
 
 
 template<class Workset>
 ThreadPool<Workset>::ThreadPool(const int max_thr)
- : max_threads(max_thr), running(false),thr_id_count(0)
+ : running(false),max_threads(max_thr)
 {
 }
 
 template<class Workset>
 void ThreadPool<Workset>::distribute()
 {
-	if(sets_waiting.size() == 0)
+	if(sets2.size() == 0)
 		return;
 
-	if(sets_queue.size() < max_threads*2/3){
-		sets_mutex.lock();
+	if(sets1.size() < max_threads*2/3){
+		sets1_mutex.lock();
+		sets2_mutex.lock();
 		list_merge();
-		sets_mutex.unlock();
+		sets2_mutex.unlock();
+		sets1_mutex.unlock();
 	}
 }
 
 template<class Workset>
 void ThreadPool<Workset>::add_worker()
 {
-	workers.emplace_back(thr_id_count++, [this](){
+	workers.emplace_back([this](){
 		
 		while(running){
 
-			sets_mutex.lock();
-			if(sets_queue.size() >= 1){
+			sets1_mutex.lock();
+			if(sets1.size() >= 1){
 
-				auto ws = sets_queue.front();
-				sets_queue.pop_front();
+				auto ws = sets1.front();
+				sets1.pop_front();
 
-				sets_mutex.unlock();
+				sets1_mutex.unlock();
 
 				running = ws();
 			}else{
-				sets_mutex.unlock();
+				sets1_mutex.unlock();
 			}
 		}
 		
@@ -96,10 +88,12 @@ template<class Workset>
 void ThreadPool<Workset>::load(Workset set)
 {
 	if(running){
-		sets_waiting.push_back(set);
+		sets2_mutex.lock();
+		sets2.push_back(set);
+		sets2_mutex.unlock();
 		distribute();
 	}else{
-		sets_queue.push_back(set);
+		sets1.push_back(set);
 	}
 }
 
@@ -117,12 +111,17 @@ void ThreadPool<Workset>::run(std::chrono::milliseconds sleepfor)
 }
 
 template<class Workset>
-void ThreadPool<Workset>::stopall()
+void ThreadPool<Workset>::send_stop()
 {
 	running = false;
-	for(auto& w : workers)
-		w.join();
 }
 
+template<class Workset>
+void ThreadPool<Workset>::join()
+{
+	for(auto& w : workers)
+		w.join();
+	workers.clear();
+}
 
 #endif

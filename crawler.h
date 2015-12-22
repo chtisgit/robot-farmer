@@ -5,6 +5,7 @@
 #include <list>
 #include <regex>
 #include <curl/curl.h>
+#include "curlprovider.h"
 
 #define ROBOTS_TXT_URL "/robots.txt"
 #define INDEX_URL "/"
@@ -22,15 +23,12 @@ class Crawler {
 public:
     typedef std::function<void (std::string)> DomainFoundFunc;
 
-    Crawler();
-    virtual ~Crawler();
-
     void crawl(std::string);
     void setCallback(DomainFoundFunc);
 
-    inline operator bool()
+    inline operator bool() const
     {
-        return curl != NULL;
+        return curl;
     }
 
 private:
@@ -45,7 +43,7 @@ private:
     bool domain_is_new(std::string);
     bool domain_is_valid(std::string);
 
-    CURL *curl;
+    Curlpp curl;
 
     std::string get_dir_struct(std::string, std::string, unsigned int);
 

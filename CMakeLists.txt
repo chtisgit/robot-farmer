@@ -13,6 +13,7 @@ set(SOURCE
     strexception.cpp
     log.cpp
     threadpool.cpp
+    curlprovider.cpp
 )
 
 set(HEADERS
@@ -25,6 +26,7 @@ set(HEADERS
     tld.h
     threadpool.h
     workset.h
+    curlprovider.h
 )
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -std=c++14")

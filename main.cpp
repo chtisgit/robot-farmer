@@ -6,38 +6,48 @@
 #include "threadpool.h"
 #include "workset.h"
 
+const char *progname = nullptr;
 ThreadPool<Workset> *global_pool = nullptr;
+
 void signal_handler_exit(int sig)
 {
     if(global_pool != nullptr)
-            global_pool->stopall();
-
-    exit(1);
+            global_pool->send_stop();
 }
 
 
 #include "util.h"
 
 void usage() {
-    std::cerr << "Usage: robot_farmer seed_domain" << std::endl; 
-    exit(1);
+    using std::cerr;
+    using std::endl;
+    cerr << "Usage: " << progname << " seed_domain num_threads" << endl; 
+    cerr << "seed_domain   ...   the domain, where farming is started" << endl;
+    cerr << "num_threads   ...   (maximum) number of threads to use" << endl;
 }
 
 int main(int argc, char **argv) {
-    Log::create(std::cout);
-    LOG << "Starting..." << std::endl;
+    progname = argv[0];
 
     signal(SIGINT, signal_handler_exit);
     signal(SIGTERM, signal_handler_exit);
 
-    if(argc < 2)
+    Log::create(std::cout);
+    LOG << "Starting..." << std::endl;
+
+    if(argc < 2){
         usage();
+	return 1;
+    }
     
     Crawler c;
     ThreadPool<Workset> pool(100);
     global_pool = &pool;
 
     c.crawl(argv[1]);
+
+    pool.join();
+    global_pool = nullptr;
 
     return 0;
 }

@@ -1,13 +1,21 @@
 #ifndef WORKSET_H
 #define WORKSET_H
 
+
 class Workset{
-    // TODO
+	CURL *curl;
+	std::string url;
+
 public:
-    bool operator()()
-    {
-    	return true;
-    }
+
+	Workset(CURL *curl, std::string url) : curl(curl), url(url)
+	{
+	}
+
+	bool operator()()
+	{
+		return true;
+	}
 };
 
 

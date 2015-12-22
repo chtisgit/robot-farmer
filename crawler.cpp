@@ -30,14 +30,6 @@ void Crawler::setCallback(DomainFoundFunc cb) {
     df_callback = cb;
 }
 
-Crawler::Crawler() {
-    curl = curl_easy_init();
-}
-
-Crawler::~Crawler() {
-    curl_easy_cleanup(curl);
-}
-
 void Crawler::make_dir(std::string name) {
     const int err = mkdir(name.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     
@@ -153,14 +145,14 @@ void Crawler::parse_domains(std::string domain) {
 
     std::string buffer;
 
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data_var);
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 1L);
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "robot-farmer V0.1");
+    curl_easy_setopt(*curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(*curl, CURLOPT_WRITEDATA, &buffer);
+    curl_easy_setopt(*curl, CURLOPT_WRITEFUNCTION, write_data_var);
+    curl_easy_setopt(*curl, CURLOPT_TIMEOUT, 1L);
+    curl_easy_setopt(*curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(*curl, CURLOPT_USERAGENT, "robot-farmer V0.1");
 
-    curl_easy_perform(curl);
+    curl_easy_perform(*curl);
     
     std::smatch domain_match;
 
@@ -211,21 +203,21 @@ void Crawler::download_robots(std::string domain) {
 
 #endif
 
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 1L);
-    curl_easy_setopt(curl, CURLOPT_USERAGENT, "robot-farmer V0.1");
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(*curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(*curl, CURLOPT_TIMEOUT, 1L);
+    curl_easy_setopt(*curl, CURLOPT_USERAGENT, "robot-farmer V0.1");
+    curl_easy_setopt(*curl, CURLOPT_FOLLOWLOCATION, 1);
 
 #if FILE_OUTPUT
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
+    curl_easy_setopt(*curl, CURLOPT_WRITEFUNCTION, write_data);
+    curl_easy_setopt(*curl, CURLOPT_WRITEDATA, fp);
 #else
     std::string buffer;
-    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
-    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data_var);
+    curl_easy_setopt(*curl, CURLOPT_WRITEDATA, &buffer);
+    curl_easy_setopt(*curl, CURLOPT_WRITEFUNCTION, write_data_var);
 #endif
    
-    curl_easy_perform(curl);
+    curl_easy_perform(*curl);
 
 #if FILE_OUTPUT
     fclose(fp);
