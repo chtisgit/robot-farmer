@@ -26,6 +26,7 @@ public:
     Crawler();
     Crawler(CURL *c);
 
+    void setCURL(CURL*);
     void crawl(std::string);
     void setCallback(DomainFoundFunc);
 
@@ -46,7 +47,7 @@ private:
     bool domain_is_new(std::string);
     bool domain_is_valid(std::string);
 
-    Curlpp curl;
+    CURL *curl;
 
     std::string get_dir_struct(std::string, std::string, unsigned int);
 

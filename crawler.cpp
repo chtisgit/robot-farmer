@@ -20,8 +20,13 @@
 std::regex Crawler::domain_regex("(([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6})");
 std::regex Crawler::safe_chars_regex("[a-zA-Z0-9]");
 
-Crawler::Crawler() {}
+Crawler::Crawler() : curl(nullptr) {}
 Crawler::Crawler(CURL *c) : curl(c) {}
+
+void Crawler::setCURL(CURL *c)
+{
+	curl = c;
+}
 
 inline bool ends_with(std::string const & value, std::string const & ending)
 {
@@ -134,7 +139,6 @@ bool Crawler::domain_is_new(std::string domain) {
 
 void Crawler::new_domain(std::string domain) {
     DEBUG_LOG("New domain found: " << domain << std::endl);
-    crawl(domain);
 
     if(df_callback)
         df_callback(domain);
@@ -148,14 +152,14 @@ void Crawler::parse_domains(std::string domain) {
 
     std::string buffer;
 
-    curl_easy_setopt(*curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(*curl, CURLOPT_WRITEDATA, &buffer);
-    curl_easy_setopt(*curl, CURLOPT_WRITEFUNCTION, write_data_var);
-    curl_easy_setopt(*curl, CURLOPT_TIMEOUT, 1L);
-    curl_easy_setopt(*curl, CURLOPT_FOLLOWLOCATION, 1);
-    curl_easy_setopt(*curl, CURLOPT_USERAGENT, "robot-farmer V0.1");
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data_var);
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 1L);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "robot-farmer V0.1");
 
-    curl_easy_perform(*curl);
+    curl_easy_perform(curl);
     
     std::smatch domain_match;
 
@@ -206,21 +210,21 @@ void Crawler::download_robots(std::string domain) {
 
 #endif
 
-    curl_easy_setopt(*curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(*curl, CURLOPT_TIMEOUT, 1L);
-    curl_easy_setopt(*curl, CURLOPT_USERAGENT, "robot-farmer V0.1");
-    curl_easy_setopt(*curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_TIMEOUT, 1L);
+    curl_easy_setopt(curl, CURLOPT_USERAGENT, "robot-farmer V0.1");
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1);
 
 #if FILE_OUTPUT
-    curl_easy_setopt(*curl, CURLOPT_WRITEFUNCTION, write_data);
-    curl_easy_setopt(*curl, CURLOPT_WRITEDATA, fp);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, fp);
 #else
     std::string buffer;
-    curl_easy_setopt(*curl, CURLOPT_WRITEDATA, &buffer);
-    curl_easy_setopt(*curl, CURLOPT_WRITEFUNCTION, write_data_var);
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &buffer);
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data_var);
 #endif
    
-    curl_easy_perform(*curl);
+    curl_easy_perform(curl);
 
 #if FILE_OUTPUT
     fclose(fp);
