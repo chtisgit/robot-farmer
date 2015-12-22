@@ -5,6 +5,8 @@ Curlpp::Curlpp()
 	curl = curl_easy_init();
 }
 
+Curlpp::Curlpp(CURL *c) : curl(c) {}
+
 Curlpp::~Curlpp()
 {
 	if(curl != nullptr)
@@ -20,6 +22,26 @@ auto Curlpp::operator*() -> CURL*
 	return curl;
 }
 
+CurlProvider::Curltmp::Curltmp(CurlProvider& p) : parent(p)
+{
+	curl = parent.get_raw_curl();
+}
+
+CurlProvider::Curltmp::~Curltmp()
+{
+	if(curl != nullptr)
+		parent.free_raw_curl(curl);
+}
+
+auto CurlProvider::Curltmp::get() -> CURL*
+{
+	return curl;
+}
+auto CurlProvider::Curltmp::operator*() -> CURL*
+{
+	return curl;
+}
+
 CurlProvider::CurlProvider(int num) 
 {
 	curls.reserve(num);
@@ -28,7 +50,7 @@ CurlProvider::CurlProvider(int num)
 	}
 }
 
-auto CurlProvider::getCURL() -> CURL*
+auto CurlProvider::get_raw_curl() -> CURL*
 {
 	CURL* c = nullptr;
 
@@ -45,7 +67,7 @@ auto CurlProvider::getCURL() -> CURL*
 	return c;
 }
 
-auto CurlProvider::freeCURL(CURL *c) -> void
+auto CurlProvider::free_raw_curl(CURL *c) -> void
 {
 	mtx.lock();
 	for(auto& p : curls){
@@ -56,4 +78,9 @@ auto CurlProvider::freeCURL(CURL *c) -> void
 	}
 	mtx.unlock();
 	// TODO: throw if not found ?
+}
+
+auto CurlProvider::get_curl_temporary() -> CurlProvider::Curltmp
+{
+	return CurlProvider::Curltmp(*this);
 }

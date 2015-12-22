@@ -4,15 +4,16 @@
 #include "log.h"
 #include "crawler.h"
 #include "threadpool.h"
+#include "curlprovider.h"
 #include "workset.h"
 
 const char *progname = nullptr;
-ThreadPool<Workset> *global_pool = nullptr;
+ThreadPool<CrawlWorkset,CurlProvider> *global_pool = nullptr;
 
 void signal_handler_exit(int sig)
 {
     if(global_pool != nullptr)
-            global_pool->send_stop();
+        global_pool->send_stop();
 }
 
 
@@ -27,6 +28,8 @@ void usage() {
 }
 
 int main(int argc, char **argv) {
+    using std::literals::chrono_literals::operator""ms;
+
     progname = argv[0];
 
     signal(SIGINT, signal_handler_exit);
@@ -35,16 +38,25 @@ int main(int argc, char **argv) {
     Log::create(std::cout);
     LOG << "Starting..." << std::endl;
 
-    if(argc < 2){
+    if(argc < 3){
         usage();
 	return 1;
     }
     
-    Crawler c;
-    ThreadPool<Workset> pool(100);
+    const char *start_url = argv[1];
+    const int num_threads = atoi(argv[2]);
+
+    if(num_threads < 1 || num_threads > 5000){
+        std::cerr << "num_threads must be between 1 and 5000" << std::endl;
+	return 1;
+    }
+
+    CurlProvider provider(num_threads);
+    ThreadPool<CrawlWorkset,CurlProvider> pool(num_threads, provider);
     global_pool = &pool;
 
-    c.crawl(argv[1]);
+    pool.load( CrawlWorkset(start_url) );
+    pool.run(20ms);
 
     pool.join();
     global_pool = nullptr;

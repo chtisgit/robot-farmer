@@ -23,6 +23,9 @@ class Crawler {
 public:
     typedef std::function<void (std::string)> DomainFoundFunc;
 
+    Crawler();
+    Crawler(CURL *c);
+
     void crawl(std::string);
     void setCallback(DomainFoundFunc);
 

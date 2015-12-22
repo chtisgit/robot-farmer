@@ -14,6 +14,7 @@ set(SOURCE
     log.cpp
     threadpool.cpp
     curlprovider.cpp
+    workset.cpp
 )
 
 set(HEADERS

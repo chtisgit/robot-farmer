@@ -1,21 +1,17 @@
 #ifndef WORKSET_H
 #define WORKSET_H
 
+#include "crawler.h"
+#include "threadpool.h"
 
-class Workset{
-	CURL *curl;
+class CrawlWorkset{
+	Crawler crawler;
 	std::string url;
 
 public:
-
-	Workset(CURL *curl, std::string url) : curl(curl), url(url)
-	{
-	}
-
-	bool operator()()
-	{
-		return true;
-	}
+	explicit CrawlWorkset(std::string url);
+	explicit CrawlWorkset(const char *url);
+	void operator()(ThreadPool<CrawlWorkset,CurlProvider>& pool, CurlProvider& curlpr);
 };
 
 

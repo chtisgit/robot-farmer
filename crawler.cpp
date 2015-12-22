@@ -20,6 +20,9 @@
 std::regex Crawler::domain_regex("(([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6})");
 std::regex Crawler::safe_chars_regex("[a-zA-Z0-9]");
 
+Crawler::Crawler() {}
+Crawler::Crawler(CURL *c) : curl(c) {}
+
 inline bool ends_with(std::string const & value, std::string const & ending)
 {
     if (ending.size() > value.size()) return false;
