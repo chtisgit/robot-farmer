@@ -65,6 +65,8 @@ void ThreadPool<Workset,GlobData>::distribute()
 template<class Workset, class GlobData>
 void ThreadPool<Workset,GlobData>::add_worker()
 {
+	using std::literals::chrono_literals::operator""ms;
+
 	workers.emplace_back([this](){
 		
 		while(running){
@@ -82,6 +84,10 @@ void ThreadPool<Workset,GlobData>::add_worker()
 			}else{
 				sets1_mutex.unlock();
 			}
+
+			// FIXME: Hardcoded sleep time
+			std::this_thread::sleep_for(50ms);
+
 		}
 		
 	});

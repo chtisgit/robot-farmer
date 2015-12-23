@@ -1,3 +1,5 @@
+#define DEBUG
+
 #include <iostream>
 #include <csignal>
 
