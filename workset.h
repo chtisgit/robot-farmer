@@ -5,7 +5,6 @@
 #include "threadpool.h"
 
 class CrawlWorkset{
-	Crawler crawler;
 	std::string url;
 
 public:

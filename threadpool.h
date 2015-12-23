@@ -12,7 +12,11 @@
 
 template<class Workset, class GlobData>
 class ThreadPool{
-	std::atomic<bool> running;
+	enum Status{
+		STOPPED, RUNNING, SHUTDOWN
+	};
+
+	std::atomic<Status> status;
 	const int max_threads;
 
 	std::list<std::thread> workers;
@@ -43,23 +47,20 @@ public:
 
 template<class Workset, class GlobData>
 ThreadPool<Workset,GlobData>::ThreadPool(const int max_thr, GlobData& gdata)
- : running(false),max_threads(max_thr),gdata(gdata)
+ : status(Status::STOPPED),max_threads(max_thr),gdata(gdata)
 {
 }
 
 template<class Workset, class GlobData>
 void ThreadPool<Workset,GlobData>::distribute()
 {
+	std::lock_guard<std::mutex> lock2( sets2_mutex );
 	if(sets2.size() == 0)
 		return;
 
-	if(sets1.size() < max_threads*2/3){
-		sets1_mutex.lock();
-		sets2_mutex.lock();
+	std::lock_guard<std::mutex> lock1( sets1_mutex );
+	if(sets1.size() < max_threads*2/3)
 		list_merge();
-		sets2_mutex.unlock();
-		sets1_mutex.unlock();
-	}
 }
 
 template<class Workset, class GlobData>
@@ -69,7 +70,7 @@ void ThreadPool<Workset,GlobData>::add_worker()
 
 	workers.emplace_back([this](){
 		
-		while(running){
+		while(status == Status::RUNNING){
 
 			sets1_mutex.lock();
 			if(sets1.size() >= 1){
@@ -97,7 +98,7 @@ void ThreadPool<Workset,GlobData>::add_worker()
 template<class Workset, class GlobData>
 void ThreadPool<Workset,GlobData>::load(Workset set)
 {
-	if(running){
+	if(status == Status::RUNNING){
 		sets2_mutex.lock();
 		sets2.push_back(set);
 		sets2_mutex.unlock();
@@ -110,12 +111,12 @@ void ThreadPool<Workset,GlobData>::load(Workset set)
 template<class Workset, class GlobData>
 void ThreadPool<Workset,GlobData>::run(std::chrono::milliseconds sleepfor)
 {
-	running = true;
+	status = Status::RUNNING;
 	for(auto i = max_threads; i > 0; i--)
 		add_worker();
 
 	LOG << "ThreadPool is running..." << std::endl;
-	while(running){
+	while(status == Status::RUNNING){
 		std::this_thread::sleep_for(sleepfor);
 		distribute();
 	}
@@ -124,7 +125,7 @@ void ThreadPool<Workset,GlobData>::run(std::chrono::milliseconds sleepfor)
 template<class Workset, class GlobData>
 void ThreadPool<Workset,GlobData>::send_stop()
 {
-	running = false;
+	status = Status::SHUTDOWN;
 }
 
 template<class Workset, class GlobData>
@@ -133,6 +134,7 @@ void ThreadPool<Workset,GlobData>::join()
 	for(auto& w : workers)
 		w.join();
 	workers.clear();
+	status = Status::STOPPED;
 }
 
 #endif
