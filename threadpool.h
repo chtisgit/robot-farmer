@@ -32,44 +32,22 @@ class ThreadPool{
     inline void list_merge(){
         sets1.splice(sets1.end(), sets2);
     }
-    void distribute();
-    void add_worker();
-    public:
 
-    ThreadPool(const int max_thr, GlobData& gdata);
+    void distribute() {
+        std::lock_guard<std::mutex> lock2( sets2_mutex );
+        if(sets2.size() == 0)
+            return;
 
-    void load(Workset set);
-    void run(std::chrono::milliseconds);
-    void send_stop();
-    void join();
-};
+        std::lock_guard<std::mutex> lock1( sets1_mutex );
+        if(sets1.size() < max_threads*2/3)
+            list_merge();
 
+    }
 
-    template<class Workset, class GlobData>
-    ThreadPool<Workset,GlobData>::ThreadPool(const int max_thr, GlobData& gdata)
-: status(Status::STOPPED),max_threads(max_thr),gdata(gdata)
-{
-}
+    void add_worker() {
+        using std::literals::chrono_literals::operator""ms;
 
-    template<class Workset, class GlobData>
-void ThreadPool<Workset,GlobData>::distribute()
-{
-    std::lock_guard<std::mutex> lock2( sets2_mutex );
-    if(sets2.size() == 0)
-        return;
-
-    std::lock_guard<std::mutex> lock1( sets1_mutex );
-    if(sets1.size() < max_threads*2/3)
-        list_merge();
-}
-
-    template<class Workset, class GlobData>
-void ThreadPool<Workset,GlobData>::add_worker()
-{
-    using std::literals::chrono_literals::operator""ms;
-
-    workers.emplace_back([this](){
-
+        workers.emplace_back([this](){
             while(status == Status::RUNNING){
 
             sets1_mutex.lock();
@@ -90,51 +68,49 @@ void ThreadPool<Workset,GlobData>::add_worker()
             std::this_thread::sleep_for(50ms);
 
             }
-
-    });
-
-}
-
-    template<class Workset, class GlobData>
-void ThreadPool<Workset,GlobData>::load(Workset set)
-{
-    if(status == Status::RUNNING){
-        sets2_mutex.lock();
-        sets2.push_back(set);
-        sets2_mutex.unlock();
-        distribute();
-    }else{
-        sets1.push_back(set);
+        });
     }
-}
 
-    template<class Workset, class GlobData>
-void ThreadPool<Workset,GlobData>::run(std::chrono::milliseconds sleepfor)
-{
-    status = Status::RUNNING;
-    for(auto i = max_threads; i > 0; i--)
-        add_worker();
+public:
 
-    LOG << "ThreadPool is running..." << std::endl;
-    while(status == Status::RUNNING){
-        std::this_thread::sleep_for(sleepfor);
-        distribute();
+    ThreadPool(const int max_thr, GlobData& gdata)
+        : status(Status::STOPPED),max_threads(max_thr),gdata(gdata)
+    {
     }
-}
 
-    template<class Workset, class GlobData>
-void ThreadPool<Workset,GlobData>::send_stop()
-{
-    status = Status::SHUTDOWN;
-}
+    void load(Workset set) {
+        if(status == Status::RUNNING){
+            sets2_mutex.lock();
+            sets2.push_back(set);
+            sets2_mutex.unlock();
+            distribute();
+        }else{
+            sets1.push_back(set);
+        }
+    }
 
-    template<class Workset, class GlobData>
-void ThreadPool<Workset,GlobData>::join()
-{
-    for(auto& w : workers)
-        w.join();
-    workers.clear();
-    status = Status::STOPPED;
-}
+    void run(std::chrono::milliseconds) {
+        status = Status::RUNNING;
+        for(auto i = max_threads; i > 0; i--)
+            add_worker();
+
+        LOG << "ThreadPool is running..." << std::endl;
+        while(status == Status::RUNNING){
+            std::this_thread::sleep_for(sleepfor);
+            distribute();
+        }
+    }
+
+    void send_stop() {
+        status = Status::SHUTDOWN;
+    }
+
+    void join() {
+        for(auto& w : workers)
+            w.join();
+        workers.clear();
+        status = Status::STOPPED;
+    }
+};
 
 #endif
