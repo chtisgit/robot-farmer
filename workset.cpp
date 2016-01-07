@@ -1,4 +1,3 @@
-
 #include "workset.h"
 
 CrawlWorkset::CrawlWorkset(std::string url) : url(url) {}
@@ -8,7 +7,7 @@ void CrawlWorkset::operator()(ThreadPool<CrawlWorkset,CurlProvider>& pool, CurlP
 {
 	auto curl = curlpr.get_curl_temporary();
 
-	Crawler crawler(*curl);
+	Crawler crawler(curl.get());
 	crawler.setCallback([&pool](std::string _url){
 		pool.load( CrawlWorkset(_url) );
 	});

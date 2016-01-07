@@ -8,11 +8,10 @@
 class Curlpp{
 	CURL *curl;
 public:
-	Curlpp();
-	Curlpp(CURL *c);
+	explicit Curlpp();
+	explicit Curlpp(CURL *c);
 	~Curlpp();
 	auto get() -> CURL*;
-	auto operator*() -> CURL*;
 	inline operator bool() const
 	{
 		return curl != nullptr;
@@ -31,9 +30,14 @@ public:
 		CurlProvider& parent;
 	public:
 		Curltmp(CurlProvider& p);
+
+#if 0
+		// why is this not working?! 
+		Curltmp(const Curltmp&) = delete;
+		Curltmp& operator=(const Curltmp&) = delete;
+#endif
 		~Curltmp();
 		auto get() -> CURL*;
-		auto operator*() -> CURL*;
 		inline operator bool()
 		{
 			return curl != nullptr;

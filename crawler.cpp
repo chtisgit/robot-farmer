@@ -23,11 +23,6 @@ std::regex Crawler::safe_chars_regex("[a-zA-Z0-9]");
 Crawler::Crawler() : curl(nullptr) {}
 Crawler::Crawler(CURL *c) : curl(c) {}
 
-void Crawler::setCURL(CURL *c)
-{
-	curl = c;
-}
-
 inline bool ends_with(std::string const & value, std::string const & ending)
 {
     if (ending.size() > value.size()) return false;
@@ -103,8 +98,8 @@ void Crawler::crawl(std::string domain) {
     // convert domain name to lowercase
     std::transform(domain.begin(), domain.end(), domain.begin(), ::tolower);
 
-    //download_robots(domain);
-    //parse_domains(domain);
+    download_robots(domain);
+    parse_domains(domain);
 }
 
 bool Crawler::domain_is_valid(std::string domain) {

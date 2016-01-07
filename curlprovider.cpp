@@ -1,4 +1,5 @@
 #include "curlprovider.h"
+#include "log.h"
 
 Curlpp::Curlpp()
 {
@@ -14,10 +15,6 @@ Curlpp::~Curlpp()
 }
 
 auto Curlpp::get() -> CURL*
-{
-	return curl;
-}
-auto Curlpp::operator*() -> CURL*
 {
 	return curl;
 }
@@ -37,24 +34,20 @@ auto CurlProvider::Curltmp::get() -> CURL*
 {
 	return curl;
 }
-auto CurlProvider::Curltmp::operator*() -> CURL*
-{
-	return curl;
-}
 
 CurlProvider::CurlProvider(int num) 
+	: curls(num)
 {
-	curls.reserve(num);
-	for(auto i = num; i > 0; i--){
-		curls.emplace_back(Curlpp{}, 0);
+	for(auto& p : curls){
+		p.second = 0;
 	}
 }
 
 auto CurlProvider::get_raw_curl() -> CURL*
 {
 	CURL* c = nullptr;
+	std::lock_guard<decltype(mtx)> mtx_guard(mtx);
 
-	mtx.lock();
 	for(auto& p : curls){
 		if(p.second == 0){
 			p.second = 1;
@@ -62,21 +55,19 @@ auto CurlProvider::get_raw_curl() -> CURL*
 			break;
 		}
 	}
-	mtx.unlock();
 
 	return c;
 }
 
 auto CurlProvider::free_raw_curl(CURL *c) -> void
 {
-	mtx.lock();
+	std::lock_guard<decltype(mtx)> mtx_guard(mtx);
 	for(auto& p : curls){
 		if(p.first.get() == c){
 			p.second = 0;
 			break;
 		}
 	}
-	mtx.unlock();
 	// TODO: throw if not found ?
 }
 

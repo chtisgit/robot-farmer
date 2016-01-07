@@ -13,6 +13,7 @@ ThreadPool<CrawlWorkset,CurlProvider> *global_pool = nullptr;
 
 void signal_handler_exit(int sig)
 {
+    LOG << "sending stop to all threads!" << std::endl;
     if(global_pool != nullptr)
         global_pool->send_stop();
 }
