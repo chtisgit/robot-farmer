@@ -17,7 +17,7 @@ class ThreadPool{
     };
 
     std::atomic<Status> status;
-    const int max_threads;
+    const std::size_t max_threads;
 
     std::list<std::thread> workers;
 
@@ -45,7 +45,7 @@ class ThreadPool{
     }
 
     void add_worker() {
-        using std::literals::chrono_literals::operator""ms;
+        using namespace std::chrono_literals;
 
         workers.emplace_back([this](){
             while(status == Status::RUNNING){
@@ -73,7 +73,7 @@ class ThreadPool{
 
 public:
 
-    ThreadPool(const int max_thr, GlobData& gdata)
+    ThreadPool(const std::size_t max_thr, GlobData& gdata)
         : status(Status::STOPPED),max_threads(max_thr),gdata(gdata)
     {
     }
@@ -89,7 +89,7 @@ public:
         }
     }
 
-    void run(std::chrono::milliseconds) {
+    void run(std::chrono::milliseconds sleepfor) {
         status = Status::RUNNING;
         for(auto i = max_threads; i > 0; i--)
             add_worker();

@@ -103,8 +103,8 @@ void Crawler::crawl(std::string domain) {
     // convert domain name to lowercase
     std::transform(domain.begin(), domain.end(), domain.begin(), ::tolower);
 
-    download_robots(domain);
-    parse_domains(domain);
+    //download_robots(domain);
+    //parse_domains(domain);
 }
 
 bool Crawler::domain_is_valid(std::string domain) {

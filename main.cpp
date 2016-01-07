@@ -29,7 +29,7 @@ void usage() {
 }
 
 int main(int argc, char **argv) {
-    using std::literals::chrono_literals::operator""ms;
+    using namespace std::literals::chrono_literals;
 
     progname = argv[0];
 
