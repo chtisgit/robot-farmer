@@ -7,7 +7,7 @@ void CrawlWorkset::operator()(ThreadPool<CrawlWorkset,CurlProvider>& pool, CurlP
 {
 	auto curl = curlpr.get_curl_temporary();
 
-	Crawler crawler(curl.get());
+	Crawler crawler(curl->get());
 	crawler.setCallback([&pool](std::string _url){
 		pool.load( CrawlWorkset(_url) );
 	});

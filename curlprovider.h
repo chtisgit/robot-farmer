@@ -3,6 +3,7 @@
 
 #include <mutex>
 #include <vector>
+#include <memory>
 #include <curl/curl.h>
 
 class Curlpp{
@@ -11,7 +12,7 @@ public:
 	explicit Curlpp();
 	explicit Curlpp(CURL *c);
 	~Curlpp();
-	auto get() -> CURL*;
+	auto get() const -> CURL*;
 	inline operator bool() const
 	{
 		return curl != nullptr;
@@ -19,34 +20,11 @@ public:
 };
 
 class CurlProvider{
-	std::vector<std::pair<Curlpp,int>> curls;
+	std::vector<std::shared_ptr<Curlpp>> curls;
 	std::mutex mtx;
-
-	auto get_raw_curl() -> CURL*;
-	auto free_raw_curl(CURL* c) -> void;
 public:
-	class Curltmp{
-		CURL *curl;
-		CurlProvider& parent;
-	public:
-		Curltmp(CurlProvider& p);
-
-#if 0
-		// why is this not working?! 
-		Curltmp(const Curltmp&) = delete;
-		Curltmp& operator=(const Curltmp&) = delete;
-#endif
-		~Curltmp();
-		auto get() -> CURL*;
-		inline operator bool()
-		{
-			return curl != nullptr;
-		}
-	};
-
 	CurlProvider(int num);
-	
-	auto get_curl_temporary() -> Curltmp;
+	auto get_curl_temporary() -> std::shared_ptr<Curlpp>;
 };
 
 #endif

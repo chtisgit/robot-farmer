@@ -62,10 +62,10 @@ class ThreadPool{
 					ws(*this, gdata);
 				}else{
 					sets1_mutex.unlock();
+					// FIXME: Hardcoded sleep time
+					std::this_thread::sleep_for(50ms);
 				}
 
-				// FIXME: Hardcoded sleep time
-				std::this_thread::sleep_for(50ms);
 
 			}
 		});
@@ -79,7 +79,7 @@ class ThreadPool{
 	}
 
 	void load(Workset set) {
-		if(status == Status::RUNNING){
+		if(status != Status::STOPPED){
 			sets2_mutex.lock();
 			sets2.push_back(set);
 			sets2_mutex.unlock();
