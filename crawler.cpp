@@ -18,12 +18,11 @@
 
 // thanks [http://myregexp.com/examples.html]
 std::regex Crawler::domain_regex("(([a-zA-Z0-9]([a-zA-Z0-9\\-]{0,61}[a-zA-Z0-9])?\\.)+[a-zA-Z]{2,6})");
-std::regex Crawler::safe_chars_regex("[a-zA-Z0-9]");
 
 Crawler::Crawler() : curl(nullptr) {}
 Crawler::Crawler(CURL *c) : curl(c) {}
 
-inline bool ends_with(std::string const & value, std::string const & ending)
+inline bool ends_with(const std::string& value, const std::string& ending)
 {
     if (ending.size() > value.size()) return false;
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
@@ -33,50 +32,42 @@ void Crawler::setCallback(DomainFoundFunc cb) {
     df_callback = cb;
 }
 
-void Crawler::make_dir(std::string name) {
-    const int err = mkdir(name.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
+void Crawler::make_dir(const std::string& name) {
+    const auto err = mkdir(name.c_str(), S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
     
     if(err == -1 && errno != EEXIST) {
-        throw StringException(std::string("Could not create string ").append(name));
+        throw StringException("Could not create directory " + name);
     }
 }
 
-void Crawler::make_dir_struct(std::string path, std::string domain, unsigned int lvl) {
-    std::string cur = path;
+void Crawler::make_dir_struct(const std::string& path, const std::string& domain, unsigned int lvl) {
+    auto cur = path;
 
     if(domain.length() < lvl) {
-        make_dir(cur.append("/").append(domain));
+        make_dir(cur + "/" + domain);
         return;
     }
 
     for(unsigned int i = 0; i < lvl; i++) {
-        const char* c = domain.substr(i, 1).c_str();
-
-        DEBUG_LOG("cur is: " << cur << std::endl);
-        if(!std::regex_match(c, safe_chars_regex)) {
-            continue;
+        if(is_safe_char(domain[i])) {
+            cur = cur + '/' + domain[i];
+            make_dir(cur);
+            //DEBUG_LOG("cur is: " << cur << std::endl);
         }
-
-        cur.append("/").append(c);
-        make_dir(cur);
     }
 }
 
-std::string Crawler::get_dir_struct(std::string path, std::string domain, unsigned int lvl) {
+std::string Crawler::get_dir_struct(const std::string& path, const std::string& domain, unsigned int lvl) {
     std::string cur = path;
 
     if(domain.length() < lvl)
-        return cur.append("/").append(domain);
+        return cur + "/" + domain;
 
     for(unsigned int i = 0; i < lvl; i++) {
-       const char* c = domain.substr(i, 1).c_str();
-
-        if(!std::regex_match(c, safe_chars_regex)) {
-            continue;
+        if(is_safe_char(domain[i])) {
+            cur = cur + '/' + domain[i];
+            //DEBUG_LOG("cur2 is: " << cur << std::endl);
         }
-
-        cur.append("/").append(c);
-        DEBUG_LOG("cur2 is: " << cur << std::endl);
     }
 
     return cur;
@@ -89,7 +80,7 @@ static size_t write_data(void *ptr, size_t size, size_t nmemb, FILE *stream) {
 
 static size_t write_data_var(void *ptr, size_t size, size_t nmemb, void *usr) {
     size_t real = size * nmemb;
-    ((std::string*)usr)->append((char*)ptr, real);
+    static_cast<std::string*>(usr)->append(static_cast<char*>(ptr), real);
 
     return real;
 }
@@ -102,7 +93,7 @@ void Crawler::crawl(std::string domain) {
     parse_domains(domain);
 }
 
-bool Crawler::domain_is_valid(std::string domain) {
+bool Crawler::domain_is_valid(const std::string& domain) {
     for(const auto &c_tld : Tld::tlds) {
         if(ends_with(domain, c_tld)) {
             DEBUG_LOG("Domain " << domain << " ends with " << c_tld << std::endl);
@@ -114,37 +105,31 @@ bool Crawler::domain_is_valid(std::string domain) {
     return false;
 }
 
-bool Crawler::domain_is_new(std::string domain) {
+bool Crawler::domain_is_new(const std::string& domain) {
     std::string fname = get_dir_struct(std::string(OUTPUT_DIR), domain, DIR_STRUCT_LEVEL).append("/").append(domain);
 
-    DEBUG_LOG("Checking if " << fname << " exists...");
+    DEBUG_LOG("Checking if " << fname << " exists..." << std::endl);
 
     struct stat buffer;   
     bool res = (stat (fname.c_str(), &buffer) == 0); 
 
-    if(res)
-        DEBUG_LOG_NONL("yes");
-    else
-        DEBUG_LOG_NONL("no");
-
+    DEBUG_LOG_NONL((res ? "yes" : "no"));
     DEBUG_LOG_NONL(std::endl);
 
     return !res;
 }
 
-void Crawler::new_domain(std::string domain) {
+void Crawler::new_domain(const std::string& domain) {
     DEBUG_LOG("New domain found: " << domain << std::endl);
 
     if(df_callback)
         df_callback(domain);
 }
 
-void Crawler::parse_domains(std::string domain) {
+void Crawler::parse_domains(const std::string& domain) {
     DEBUG_LOG("Searching index of " << domain << " for new domains" << std::endl);
 
-    std::string url = domain;
-    url.append(INDEX_URL);
-
+    std::string url = domain + INDEX_URL;
     std::string buffer;
 
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
@@ -179,13 +164,12 @@ void Crawler::parse_domains(std::string domain) {
     }
 }
 
-void Crawler::download_robots(std::string domain) {
+void Crawler::download_robots(const std::string& domain) {
     LOG << domain << std::endl;
 
     DEBUG_LOG("Downloading robots.txt from " << domain << std::endl);
 
-    std::string url = domain;
-    url.append(ROBOTS_TXT_URL);
+    std::string url = domain + ROBOTS_TXT_URL;
 
 #if FILE_OUTPUT
     make_dir(std::string(OUTPUT_DIR));

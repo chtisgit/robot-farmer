@@ -19,6 +19,8 @@ class ThreadPool{
 	std::atomic<Status> status;
 	const std::size_t max_threads;
 
+	// number of worksets currently processed
+	std::atomic<int> processing; 
 	std::list<std::thread> workers;
 
 	std::mutex sets1_mutex;
@@ -35,10 +37,17 @@ class ThreadPool{
 
 	void distribute() {
 		std::lock_guard<std::mutex> lock2( sets2_mutex );
-		if(sets2.size() == 0)
-			return;
-
 		std::lock_guard<std::mutex> lock1( sets1_mutex );
+
+		if(sets1.size() == 0 && sets2.size() == 0){
+			DEBUG_LOG("both work-queues are empty!" << std::endl);
+			if(processing == 0){
+				status = Status::SHUTDOWN;
+				LOG << "ThreadPool shutdown! No more work." << std::endl;
+			}
+			return;
+		}
+
 		if(sets1.size() < max_threads*2/3)
 			list_merge();
 
@@ -48,9 +57,14 @@ class ThreadPool{
 		using namespace std::chrono_literals;
 
 		workers.emplace_back([this](){
+			auto work = false;
 			while(status == Status::RUNNING){
 
 				sets1_mutex.lock();
+				if(status != Status::RUNNING){
+					sets1_mutex.unlock();
+					break;
+				}
 				if(sets1.size() >= 1){
 
 					auto ws = sets1.front();
@@ -58,15 +72,21 @@ class ThreadPool{
 
 					sets1_mutex.unlock();
 
-					LOG << "Workset is processed ..." << std::endl;
+					DEBUG_LOG("Workset is processed ..." << std::endl);
+					if(!work){
+						++processing;
+						work = true;
+					}
 					ws(*this, gdata);
 				}else{
 					sets1_mutex.unlock();
-					// FIXME: Hardcoded sleep time
-					std::this_thread::sleep_for(50ms);
+					if(work){
+						--processing;
+						work = false;
+					}
 				}
-
-
+				// FIXME: Hardcoded sleep time
+				std::this_thread::sleep_for(40ms);
 			}
 		});
 	}
@@ -74,7 +94,7 @@ class ThreadPool{
 	public:
 
 	ThreadPool(const std::size_t max_thr, GlobData& gdata)
-		: status(Status::STOPPED),max_threads(max_thr),gdata(gdata)
+		: status(Status::STOPPED),max_threads(max_thr),processing(0),gdata(gdata)
 	{
 	}
 
@@ -83,7 +103,6 @@ class ThreadPool{
 			sets2_mutex.lock();
 			sets2.push_back(set);
 			sets2_mutex.unlock();
-			distribute();
 		}else{
 			sets1.push_back(set);
 		}

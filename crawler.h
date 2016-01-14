@@ -7,6 +7,8 @@
 #include <curl/curl.h>
 #include "curlprovider.h"
 
+#include <cctype>
+
 #define ROBOTS_TXT_URL "/robots.txt"
 #define INDEX_URL "/"
 
@@ -21,7 +23,7 @@
 
 class Crawler {
 public:
-    typedef std::function<void (std::string)> DomainFoundFunc;
+    typedef std::function<void (const std::string &)> DomainFoundFunc;
 
     Crawler();
     Crawler(CURL *c);
@@ -37,24 +39,27 @@ public:
 
 private:
 
-    void download_robots(std::string domain);
-    void parse_domains(std::string domain);
+    inline bool is_safe_char(char x) {
+        return isalnum(x);
+    }
 
-    void make_dir(std::string);
-    void make_dir_struct(std::string, std::string, unsigned int);
+    void download_robots(const std::string & domain);
+    void parse_domains(const std::string & domain);
 
-    void new_domain(std::string);
-    bool domain_is_new(std::string);
-    bool domain_is_valid(std::string);
+    void make_dir(const std::string &);
+    void make_dir_struct(const std::string &, const std::string &, unsigned int);
+
+    void new_domain(const std::string &);
+    bool domain_is_new(const std::string &);
+    bool domain_is_valid(const std::string &);
 
     CURL *curl;
 
-    std::string get_dir_struct(std::string, std::string, unsigned int);
+    std::string get_dir_struct(const std::string &, const std::string &, unsigned int);
 
     DomainFoundFunc df_callback;
 
     static std::regex domain_regex;
-    static std::regex safe_chars_regex;
 
 };
 
