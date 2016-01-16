@@ -12,6 +12,16 @@
 
 template<class Workset, class GlobData>
 class ThreadPool{
+
+	class Worker{
+		std::thread thr;
+	public:
+		Worker(ThreadPool* p) : thr(&ThreadPool::worker_do, p) {}
+		~Worker(){ if(thr.joinable()) thr.join(); }
+		auto running() -> bool { return !thr.joinable(); }
+		auto join() -> void { thr.join(); }
+	};
+
 	enum Status{
 		STOPPED, RUNNING, SHUTDOWN
 	};
@@ -21,7 +31,7 @@ class ThreadPool{
 
 	// number of worksets currently processed
 	std::atomic<int> processing; 
-	std::list<std::thread> workers;
+	std::list<Worker> workers;
 
 	std::mutex sets1_mutex;
 	std::list<Workset> sets1;
@@ -31,11 +41,49 @@ class ThreadPool{
 
 	GlobData& gdata;
 
-	inline void list_merge(){
+	inline auto list_merge() -> void
+	{
 		sets1.splice(sets1.end(), sets2);
 	}
 
-	void distribute() {
+	auto worker_do() -> void
+	{
+		using namespace std::chrono_literals;
+		auto work = false;
+		while(status == Status::RUNNING){
+
+			sets1_mutex.lock();
+			if(status != Status::RUNNING){
+				sets1_mutex.unlock();
+				break;
+			}
+			if(sets1.size() >= 1){
+
+				auto ws = sets1.front();
+				sets1.pop_front();
+
+				sets1_mutex.unlock();
+
+				DEBUG_LOG("Workset is processed ..." << std::endl);
+				if(!work){
+					++processing;
+					work = true;
+				}
+				ws(*this, gdata);
+			}else{
+				sets1_mutex.unlock();
+				if(work){
+					--processing;
+					work = false;
+				}
+			}
+			// FIXME: Hardcoded sleep time
+			std::this_thread::sleep_for(40ms);
+		}
+	}
+
+	auto distribute() -> void
+	{
 		std::lock_guard<std::mutex> lock2( sets2_mutex );
 		std::lock_guard<std::mutex> lock1( sets1_mutex );
 
@@ -53,52 +101,20 @@ class ThreadPool{
 
 	}
 
-	void add_worker() {
-		using namespace std::chrono_literals;
-
-		workers.emplace_back([this](){
-			auto work = false;
-			while(status == Status::RUNNING){
-
-				sets1_mutex.lock();
-				if(status != Status::RUNNING){
-					sets1_mutex.unlock();
-					break;
-				}
-				if(sets1.size() >= 1){
-
-					auto ws = sets1.front();
-					sets1.pop_front();
-
-					sets1_mutex.unlock();
-
-					DEBUG_LOG("Workset is processed ..." << std::endl);
-					if(!work){
-						++processing;
-						work = true;
-					}
-					ws(*this, gdata);
-				}else{
-					sets1_mutex.unlock();
-					if(work){
-						--processing;
-						work = false;
-					}
-				}
-				// FIXME: Hardcoded sleep time
-				std::this_thread::sleep_for(40ms);
-			}
-		});
+	auto add_worker() -> void
+	{
+		workers.emplace_back(this);
 	}
 
-	public:
+public:
 
 	ThreadPool(const std::size_t max_thr, GlobData& gdata)
 		: status(Status::STOPPED),max_threads(max_thr),processing(0),gdata(gdata)
 	{
 	}
 
-	void load(Workset set) {
+	auto load(Workset set) -> void
+	{
 		if(status != Status::STOPPED){
 			sets2_mutex.lock();
 			sets2.push_back(set);
@@ -108,7 +124,8 @@ class ThreadPool{
 		}
 	}
 
-	void run(std::chrono::milliseconds sleepfor) {
+	auto run(std::chrono::milliseconds sleepfor) -> void
+	{
 		status = Status::RUNNING;
 		for(auto i = max_threads; i > 0; i--)
 			add_worker();
@@ -120,13 +137,13 @@ class ThreadPool{
 		}
 	}
 
-	void send_stop() {
+	auto send_stop() -> void
+	{
 		status = Status::SHUTDOWN;
 	}
 
-	void join() {
-		for(auto& w : workers)
-			w.join();
+	auto join() -> void
+	{
 		workers.clear();
 		status = Status::STOPPED;
 	}
