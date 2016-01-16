@@ -3,6 +3,7 @@
 #include <string>
 #include <regex>
 #include <algorithm>
+#include <unordered_set>
 
 #include <cstdlib>
 #include <cstdio>
@@ -141,14 +142,17 @@ void Crawler::parse_domains(const std::string& domain) {
 
     curl_easy_perform(curl);
     
+
     std::smatch domain_match;
+
+    std::unordered_set<std::string> domain_set;
 
     const std::sregex_token_iterator end;
     for (std::sregex_token_iterator i(buffer.cbegin(), buffer.cend(), domain_regex);
             i != end;
             ++i)
     {
-        std::string domain = std::string(*i);
+        auto domain = static_cast<std::string>(*i);
 
         // convert domain name to lowercase
         std::transform(domain.begin(), domain.end(), domain.begin(), ::tolower);
@@ -156,9 +160,10 @@ void Crawler::parse_domains(const std::string& domain) {
         DEBUG_LOG("Checking domain " << domain << std::endl);
 
         if(domain_is_new(domain)) {
-            if(domain_is_valid(domain)) {
+            if(domain_is_valid(domain) && domain_set.find(domain) == domain_set.end()) {
                 DEBUG_LOG("Calling new_domain" << std::endl);
                 new_domain(*i);
+		domain_set.insert(domain);
             }
         }
     }
