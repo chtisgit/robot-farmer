@@ -116,11 +116,20 @@ public:
 	auto load(Workset set) -> void
 	{
 		if(status != Status::STOPPED){
-			sets2_mutex.lock();
+			std::lock_guard<std::mutex> g(sets2_mutex);
 			sets2.push_back(set);
-			sets2_mutex.unlock();
 		}else{
 			sets1.push_back(set);
+		}
+	}
+
+	auto load(std::list<Workset>& sets) -> void
+	{
+		if(status != Status::STOPPED){
+			std::lock_guard<std::mutex> g(sets2_mutex);
+			sets2.splice(sets2.end(), sets);
+		}else{
+			sets1.splice(sets1.end(), sets);
 		}
 	}
 
