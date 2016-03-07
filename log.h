@@ -38,7 +38,7 @@ private:
     std::queue<std::string> message_queue;
     std::mutex log_lock;
     std::condition_variable signal;
-    std::thread *log_worker;
+    std::thread log_worker;
     std::ostream &log_output;
     bool log_running;
 

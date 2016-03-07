@@ -30,7 +30,7 @@ void Log::shutdown() {
  */
 Log::Log(std::ostream& out) : log_output(out) {
     log_running = true;
-    log_worker = new std::thread(std::bind(&Log::run, this));
+    log_worker = std::thread(std::bind(&Log::run, this));
 }
 
 Log::~Log() {
@@ -38,9 +38,7 @@ Log::~Log() {
     signal.notify_all();
 
     // wait for the worker to exit
-    log_worker->join();
-
-    delete(log_worker);
+    log_worker.join();
 }
 
 /**
