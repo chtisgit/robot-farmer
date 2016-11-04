@@ -27,5 +27,5 @@
 
 
 ## About
-robot-farmer is an C++ tool which can be used to crawl the robots.txt file from varios websites.
+robot-farmer is an C++ tool which can be used to crawl the robots.txt file from various websites.
 It also retrieves the index site and searches for new domain names to crawl.
